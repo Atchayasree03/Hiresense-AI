@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+
+# Embeddings
+backend/data/candidate_embeddings.npy
+
+# FAISS Index
+backend/data/candidates.index
