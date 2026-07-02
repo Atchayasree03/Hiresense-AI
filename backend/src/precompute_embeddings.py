@@ -1,9 +1,9 @@
 import numpy as np
 from tqdm import tqdm
 
-from loader import load_candidates
-from profile_builder import build_candidate_text
-from embeddings import generate_embedding
+from src.loader import load_candidates
+from src.profile_builder import build_candidate_text
+from src.embeddings import model
 
 
 def precompute():
@@ -12,30 +12,24 @@ def precompute():
         "data/candidates.jsonl"
     )
 
-    embeddings = []
-
-    # TEMPORARY
-    candidates = candidates[:1000]
+    texts = []
 
     for candidate in tqdm(
         candidates,
-        desc="Generating Embeddings"
+        desc="Preparing Candidate Text"
     ):
 
-        text = build_candidate_text(
-            candidate
+        texts.append(
+            build_candidate_text(candidate)
         )
 
-        embedding = generate_embedding(
-            text
-        )
+    print("Generating embeddings...")
 
-        embeddings.append(
-            embedding
-        )
-
-    embeddings = np.array(
-        embeddings
+    embeddings = model.encode(
+        texts,
+        batch_size=128,
+        show_progress_bar=True,
+        convert_to_numpy=True
     )
 
     np.save(

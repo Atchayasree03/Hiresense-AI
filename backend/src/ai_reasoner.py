@@ -1,5 +1,4 @@
 import os
-
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -14,7 +13,8 @@ client = OpenAI(
 def generate_ai_reason(
     candidate,
     matched_skills,
-    jd_text
+    jd_text,
+    company_analysis=None
 ):
 
     headline = (
@@ -74,6 +74,8 @@ You are an expert recruiter.
 
 Analyze the candidate against the Job Description.
 
+Generate a professional hiring summary.
+
 JOB DESCRIPTION:
 {jd_text}
 
@@ -95,6 +97,7 @@ PROFESSIONAL SUMMARY:
 CAREER HISTORY:
 {career_history}
 
+
 Write a concise recruiter-style assessment.
 
 Requirements:
@@ -105,7 +108,19 @@ Requirements:
 - Explain why candidate is suitable
 - Professional HR tone
 - No bullet points
+
+Mention:
+- Why the candidate matches this role.
+- Skills relevant to the JD.
+- Career progression.
+- Company background.
+- Whether the candidate has product, consulting, or mixed experience.
+- Production or engineering experience if available.
+
+Do not mention scores.
+
 """
+    
 
     try:
 

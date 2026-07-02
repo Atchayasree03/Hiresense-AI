@@ -14,55 +14,47 @@ client = OpenAI(
 def parse_jd(jd_text):
 
     prompt = f"""
-    You are an ATS Job Description Parser.
+        You are an expert technical recruiter.
 
-    Extract structured information from the Job Description.
+        Analyze the following Job Description.
 
-    IMPORTANT RULES:
+        Return ONLY valid JSON.
 
-    1. Return ONLY valid JSON.
-    2. Do NOT explain anything.
-    3. Do NOT add markdown.
-    4. Normalize every skill name.
-    5. Remove adjectives like:
-    - Advanced
-    - Strong
-    - Expert
-    - Excellent
-    - Good
-    - Basic
-    - Proficient
-    6. Keep only the canonical skill name.
+        Do NOT copy text blindly.
 
-    Examples:
+        Infer the recruiter's intent.
 
-    Advanced Python -> Python
-    Strong SQL -> SQL
-    Expert TensorFlow -> TensorFlow
-    Excellent PyTorch -> PyTorch
-    Basic Java -> Java
+        Return this exact format:
 
-    Do NOT invent skills.
+        {{
+        "role":"",
+        "required_skills":[],
+        "preferred_skills":[],
+        "experience_years":0,
+        "responsibilities":[],
+        "core_competencies":[],
+        "engineering_focus":[],
+        "company_preference":"",
+        "behavioral_preferences":[]
+        }}
 
-    If a skill is not explicitly mentioned,
-    DO NOT include it.
+        Rules:
 
-    Separate required skills and preferred skills.
+        - Separate required and preferred skills.
+        - Infer hidden competencies.
+        - Group similar technologies.
+        - If Pinecone, FAISS, Weaviate appear → Retrieval Systems.
+        - If TensorFlow, PyTorch appear → Machine Learning.
+        - If NDCG, MRR appear → Ranking Evaluation.
+        - Infer engineering focus.
+        - Infer preferred company type.
+        - Infer behavioral expectations.
+        - Return JSON only.
 
-    Return exactly this JSON format:
+        JD:
 
-    {{
-    "role": "",
-    "required_skills": [],
-    "preferred_skills": [],
-    "experience_years": 0,
-    "responsibilities": []
-    }}
-
-    Job Description:
-
-    {jd_text}
-    """
+        {jd_text}
+        """
 
     response = client.chat.completions.create(
         model="meta/llama-3.1-8b-instruct",

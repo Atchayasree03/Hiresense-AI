@@ -5,11 +5,14 @@ from src.behavior_score import calculate_behavior_score
 from src.jd_parser import parse_jd
 from src.explanation_engine import generate_explanation
 from src.ai_reasoner import generate_ai_reason
-
+from src.jd_intent_engine import extract_intent
 
 def rank_candidates(jd_text, top_k=10):
 
     parsed_jd = parse_jd(jd_text)
+    
+    
+    jd_intent = extract_intent(parsed_jd)
 
     jd_skills = (
         parsed_jd["required_skills"]
@@ -44,6 +47,11 @@ def rank_candidates(jd_text, top_k=10):
             candidate,
             parsed_jd
         )
+
+        career = calculate_career_score(
+        candidate,
+        jd_intent
+    )
 
         career_score = career["career_score"]
 
@@ -83,53 +91,31 @@ def rank_candidates(jd_text, top_k=10):
         ai_summary = generate_ai_reason(
             candidate,
             matched_skills,
-            jd_text
+            jd_text,
         )
 
-        ranked_candidates.append(
-            {
-                "candidate_id":
-                candidate["candidate_id"],
+        ranked_candidates.append({
+        "candidate_id": candidate["candidate_id"],
 
-                "headline":
-                candidate["profile"].get(
-                    "headline",
-                    ""
-                ),
+        "profile": candidate["profile"],
 
-                "years_of_experience":
-                candidate["profile"].get(
-                    "years_of_experience",
-                    0
-                ),
+        "headline": candidate["profile"]["headline"],
 
-                "semantic_score":
-                semantic_score,
+        "semantic_score": semantic_score,
+        "career_score": career_score,
+        "behavior_score": behavior_score,
+        "final_score": final_score,
 
-                "career_score":
-                career_score,
-
-                "behavior_score":
-                behavior_score,
-
-                "final_score":
-                final_score,
-
-                "matched_skills":
-                matched_skills,
-
-                "reasons":
-                reasons,
-
-                "ai_summary":
-                ai_summary
-            }
-        )
-
+        "matched_skills": matched_skills,
+        "reasons": reasons,
+        "ai_summary": ai_summary
+    })
     ranked_candidates.sort(
         key=lambda x: x["final_score"],
         reverse=True
     )
+
+   
 
     return ranked_candidates[:top_k]
 

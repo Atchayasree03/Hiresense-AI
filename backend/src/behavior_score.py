@@ -1,4 +1,4 @@
-from src.candidate_mapper import get_candidate
+
 
 def calculate_behavior_score(candidate):
 

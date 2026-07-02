@@ -3,12 +3,12 @@ import API from "./services/api";
 import CandidateModal from "./components/CandidateModal";
 import CandidateTable from "./components/CandidateTable";
 import { saveAs } from "file-saver";
-
+import { Routes, Route } from "react-router-dom";
+import CandidateDetails from "./pages/CandidateDetails";
 function App() {
   const [jd, setJd] = useState("");
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [shortlisted, setShortlisted] = useState([]);
   const analyzeCandidates = async () => {
     try {
@@ -75,110 +75,109 @@ function App() {
       (c) => c.final_score >= 60
     ).length;
 
-  return (
-    <div className="min-h-screen bg-slate-100 p-8">
-      <div className="max-w-7xl mx-auto">
+    return (
+  <Routes>
 
-        <h1 className="text-5xl font-bold text-center mb-8">
-          Redrob AI Talent Intelligence
-        </h1>
+    <Route
+      path="/"
+      element={
+        <div className="min-h-screen bg-slate-100 p-8">
+          <div className="max-w-7xl mx-auto">
 
-        <div className="bg-white rounded-xl shadow-lg p-6">
+            <h1 className="text-5xl font-bold text-center mb-8">
+              Redrob AI Talent Intelligence
+            </h1>
 
-          <textarea
-            rows={10}
-            value={jd}
-            onChange={(e) => setJd(e.target.value)}
-            placeholder="Paste Job Description..."
-            className="w-full border rounded-lg p-4"
-          />
+            <div className="bg-white rounded-xl shadow-lg p-6">
 
-          <div className="flex gap-4 mt-4">
+              <textarea
+                rows={10}
+                value={jd}
+                onChange={(e) => setJd(e.target.value)}
+                placeholder="Paste Job Description..."
+                className="w-full border rounded-lg p-4"
+              />
 
-            <button
-              onClick={analyzeCandidates}
-              className="bg-blue-600 text-white px-8 py-3 rounded-lg"
-            >
-              {loading
-                ? "Analyzing..."
-                : "Analyze Candidates"}
-            </button>
+              <div className="flex gap-4 mt-4">
 
-            {candidates.length > 0 && (
-              <button
-                onClick={exportCSV}
-                className="bg-purple-600 text-white px-6 py-3 rounded-lg"
-              >
-                Export CSV
-              </button>
-            )}
+                <button
+                  onClick={analyzeCandidates}
+                  className="bg-blue-600 text-white px-8 py-3 rounded-lg"
+                >
+                  {loading
+                    ? "Analyzing..."
+                    : "Analyze Candidates"}
+                </button>
 
-          </div>
+                {candidates.length > 0 && (
+                  <button
+                    onClick={exportCSV}
+                    className="bg-purple-600 text-white px-6 py-3 rounded-lg"
+                  >
+                    Export CSV
+                  </button>
+                )}
 
-        </div>
-
-        {candidates.length > 0 && (
-          <>
-            <div className="grid grid-cols-4 gap-4 mt-8">
-
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h3 className="text-gray-600">
-                  Total Candidates
-                </h3>
-                <p className="text-2xl font-bold">
-                  {shortlisted.length}
-                </p>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h3 className="text-gray-600">
-                  Average Score
-                </h3>
-                <p className="text-2xl font-bold">
-                  {avgScore}
-                </p>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h3 className="text-gray-600">
-                  Excellent Matches
-                </h3>
-                <p className="text-2xl font-bold text-green-600">
-                  {excellentMatches}
-                </p>
-              </div>
-
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h3 className="text-gray-600">
-                  Shortlisted
-                </h3>
-                <p className="text-2xl font-bold">
-                  0
-                </p>
               </div>
 
             </div>
 
-            <CandidateTable
-                candidates={candidates}
-                onViewDetails={setSelectedCandidate}
-                onShortlist={shortlistCandidate}
-              />
-          </>
-        )}
+            {candidates.length > 0 && (
+              <>
+                <div className="grid grid-cols-4 gap-4 mt-8">
 
-        {selectedCandidate && (
-          <CandidateModal
-            candidate={selectedCandidate}
-            onClose={() =>
-              setSelectedCandidate(null)
-            }
-          />
-        )}
+                  <div className="bg-white p-4 rounded-lg shadow">
+                    <h3>Total Candidates</h3>
+                    <p className="text-2xl font-bold">
+                      {shortlisted.length}
+                    </p>
+                  </div>
 
-      </div>
-    </div>
-  );
+                  <div className="bg-white p-4 rounded-lg shadow">
+                    <h3>Average Score</h3>
+                    <p className="text-2xl font-bold">
+                      {avgScore}
+                    </p>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-lg shadow">
+                    <h3>Excellent Matches</h3>
+                    <p className="text-2xl font-bold text-green-600">
+                      {excellentMatches}
+                    </p>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-lg shadow">
+                    <h3>Shortlisted</h3>
+                    <p className="text-2xl font-bold">
+                      {shortlisted.length}
+                    </p>
+                  </div>
+
+                </div>
+
+                <CandidateTable
+                    candidates={candidates}
+                    onShortlist={shortlistCandidate}
+                />
+
+              </>
+            )}
+
+          </div>
+        </div>
+      }
+    />
+
+    <Route
+      path="/candidate/:id"
+      element={<CandidateDetails />}
+    />
+
+  </Routes>
+);
+
+ 
 }
 
 export default App;

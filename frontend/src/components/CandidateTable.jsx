@@ -1,8 +1,9 @@
+import { useNavigate } from "react-router-dom";
 function CandidateTable({
   candidates,
-  onViewDetails,
   onShortlist
-}){
+}) {
+const navigate = useNavigate();
 const getMatchLabel = (score) => {
   if (score >= 60)
     return "Excellent";
@@ -118,13 +119,18 @@ const getMatchLabel = (score) => {
                 <div className="flex flex-col gap-2">
 
                     <button
-                    onClick={() =>
-                        onViewDetails(candidate)
-                    }
-                    className="bg-blue-600 text-white px-3 py-2 rounded"
-                    >
-                    View Details
-                    </button>
+                        onClick={() =>
+                          navigate(`/candidate/${candidate.candidate_id}`, {
+                              state: {
+                                  rankedCandidate: candidate
+                              }
+                          })
+                      }
+
+                        className="bg-blue-600 text-white px-3 py-2 rounded"
+                      >
+                        View Details
+                      </button>
 
                     <button
                     onClick={() =>

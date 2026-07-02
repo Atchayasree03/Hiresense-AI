@@ -1,5 +1,5 @@
 from difflib import SequenceMatcher
-
+from src.candidate_evidence import extract_candidate_evidence
 
 def normalize(text):
     return str(text).lower().strip()
@@ -106,7 +106,7 @@ def score_required_skills(
     searchable = " ".join([
         candidate_profile["headline"],
         candidate_profile["summary"],
-        candidate_profile["projects"],
+        " ".join(candidate_profile["projects"]),
         " ".join(candidate_profile["skills"])
     ]).lower()
 
@@ -138,7 +138,7 @@ def score_preferred_skills(
     searchable = " ".join([
         candidate_profile["headline"],
         candidate_profile["summary"],
-        candidate_profile["projects"],
+        " ".join(candidate_profile["projects"]),
         " ".join(candidate_profile["skills"])
     ]).lower()
 
@@ -241,6 +241,42 @@ def score_education(
 
     return 0
 
+def score_core_competencies(
+    evidence,
+    intent
+):
+
+    score = 0
+
+    competencies = intent.get(
+        "core_competencies",
+        []
+    )
+
+    if "Search Systems" in competencies:
+
+        if evidence["retrieval"]:
+
+            score += 5
+
+    if "Machine Learning" in competencies:
+
+        if evidence["production_ml"]:
+
+            score += 5
+
+    if "Generative AI" in competencies:
+
+        if (
+            evidence["retrieval"]
+            or
+            evidence["production_ml"]
+        ):
+
+            score += 5
+
+    return score
+
 
 def calculate_career_score(
     candidate,
@@ -250,6 +286,10 @@ def calculate_career_score(
     profile = extract_candidate_profile(
         candidate
     )
+
+    profile = extract_candidate_evidence(
+    candidate
+)
 
     required_score, matched_required = (
         score_required_skills(
@@ -284,14 +324,20 @@ def calculate_career_score(
         profile
     )
 
-    total = (
-        required_score +
-        preferred_score +
-        experience_score +
-        role_score +
-        project_score +
-        education_score
+    competency_score = score_core_competencies(
+        profile,
+        parsed_jd
     )
+
+    total = (
+    required_score +
+    preferred_score +
+    experience_score +
+    role_score +
+    project_score +
+    education_score +
+    competency_score
+)
 
     return {
         "career_score": round(total, 2),
