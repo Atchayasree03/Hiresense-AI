@@ -5,8 +5,6 @@ __pycache__/
 # Virtual Environment
 venv/
 
-# Embeddings
+# Generated files
 backend/data/candidate_embeddings.npy
-
-# FAISS Index
 backend/data/candidates.index
