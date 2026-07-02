@@ -28,23 +28,31 @@ function App() {
   };
 
   const exportCSV = () => {
-    const rows = candidates.map(
-      (c, index) =>
-        `${index + 1},${c.candidate_id},${c.final_score}`
-    );
 
-    const csv =
-      `Rank,CandidateID,Score\n${rows.join("\n")}`;
+  const rows = candidates.map((c, index) => {
 
-    const blob = new Blob(
-      [csv],
-      {
-        type: "text/csv;charset=utf-8;",
-      }
-    );
+    const reasoning =
+      `${c.headline}. ` +
+      `Matched Skills: ${c.matched_skills.join(", ")}.`;
 
-    saveAs(blob, "candidates.csv");
-  };
+    return `"${c.candidate_id}",${index + 1},${(
+      c.match_score / 100
+    ).toFixed(3)},"${reasoning}"`;
+
+  });
+
+  const csv =
+    `candidate_id,rank,score,reasoning\n${rows.join("\n")}`;
+
+  const blob = new Blob(
+    [csv],
+    {
+      type: "text/csv;charset=utf-8;"
+    }
+  );
+
+  saveAs(blob, "submission.csv");
+};
   const shortlistCandidate = (candidate) => {
   setShortlisted((prev) => {
     if (
@@ -64,7 +72,7 @@ function App() {
     candidates.length > 0
       ? (
           candidates.reduce(
-            (sum, c) => sum + c.final_score,
+            (sum, c) => sum + c.match_score,
             0
           ) / candidates.length
         ).toFixed(2)
@@ -72,7 +80,7 @@ function App() {
 
   const excellentMatches =
     candidates.filter(
-      (c) => c.final_score >= 60
+      (c) => c.match_score >= 60
     ).length;
 
     return (
@@ -124,36 +132,7 @@ function App() {
 
             {candidates.length > 0 && (
               <>
-                <div className="grid grid-cols-4 gap-4 mt-8">
-
-                  <div className="bg-white p-4 rounded-lg shadow">
-                    <h3>Total Candidates</h3>
-                    <p className="text-2xl font-bold">
-                      {shortlisted.length}
-                    </p>
-                  </div>
-
-                  <div className="bg-white p-4 rounded-lg shadow">
-                    <h3>Average Score</h3>
-                    <p className="text-2xl font-bold">
-                      {avgScore}
-                    </p>
-                  </div>
-
-                  <div className="bg-white p-4 rounded-lg shadow">
-                    <h3>Excellent Matches</h3>
-                    <p className="text-2xl font-bold text-green-600">
-                      {excellentMatches}
-                    </p>
-                  </div>
-
-                  <div className="bg-white p-4 rounded-lg shadow">
-                    <h3>Shortlisted</h3>
-                    <p className="text-2xl font-bold">
-                      {shortlisted.length}
-                    </p>
-                  </div>
-
+                <div className="grid grid-cols-4 gap-4 mt-8"> 
                 </div>
 
                 <CandidateTable

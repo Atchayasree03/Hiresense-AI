@@ -1,115 +1,55 @@
-import csv
+import pandas as pd
+
+from src.rank_candidates import rank_candidates
 
 
-def export_candidates_to_csv(
-    candidates,
-    output_file="ranked_candidates.csv"
-):
+def export_csv(jd_text):
 
-    with open(
-        output_file,
-        mode="w",
-        newline="",
-        encoding="utf-8"
-    ) as file:
+    candidates = rank_candidates(
+        jd_text,
+        top_k=100
+    )
 
-        writer = csv.writer(file)
+    rows = []
 
-        writer.writerow(
-            [
-                "Rank",
-                "Candidate ID",
-                "Headline",
-                "Experience",
-                "Semantic Score",
-                "Career Score",
-                "Behavior Score",
-                "Final Score",
-                "Matched Skills",
-                "AI Summary"
-            ]
+    for rank, candidate in enumerate(candidates, start=1):
+
+        reasoning = (
+            f"{candidate['headline']} with "
+            f"{candidate['years_of_experience']} years experience. "
+            f"Matched skills: "
+            f"{', '.join(candidate['matched_skills'][:5])}. "
+            f"Overall match score "
+            f"{candidate['match_score']}."
         )
 
-        for rank, candidate in enumerate(
-            candidates,
-            start=1
-        ):
+        rows.append({
 
-            writer.writerow(
-                [
-                    rank,
+            "candidate_id": candidate["candidate_id"],
 
-                    candidate[
-                        "candidate_id"
-                    ],
+            "rank": rank,
 
-                    candidate[
-                        "headline"
-                    ],
+            "score": round(candidate["match_score"] / 100, 3),
 
-                    candidate[
-                        "years_of_experience"
-                    ],
+            "reasoning": reasoning
 
-                    candidate[
-                        "semantic_score"
-                    ],
+        })
 
-                    candidate[
-                        "career_score"
-                    ],
+    df = pd.DataFrame(rows)
 
-                    candidate[
-                        "behavior_score"
-                    ],
-
-                    candidate[
-                        "final_score"
-                    ],
-
-                    ", ".join(
-                        candidate[
-                            "matched_skills"
-                        ]
-                    ),
-
-                    candidate[
-                        "ai_summary"
-                    ]
-                ]
-            )
-
-    print(
-        f"\nCSV exported successfully: "
-        f"{output_file}"
+    df.to_csv(
+        "submission.csv",
+        index=False
     )
+
+    print("submission.csv generated successfully.")
 
 
 if __name__ == "__main__":
 
-    from rank_candidates import (
-        rank_candidates
-    )
+    jd = open(
+        "sample_jd.txt",
+        encoding="utf-8"
+    ).read()
 
-    jd = """
-    Data Scientist
-
-    Required Skills:
-    Python
-    SQL
-    TensorFlow
-    PyTorch
-    Scikit-learn
-
-    Experience:
-    3+ years
-    """
-
-    candidates = rank_candidates(
-        jd,
-        top_k=10
-    )
-
-    export_candidates_to_csv(
-        candidates
-    )
+    export_csv(jd)

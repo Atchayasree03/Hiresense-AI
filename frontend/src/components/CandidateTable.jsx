@@ -5,13 +5,30 @@ function CandidateTable({
 }) {
 const navigate = useNavigate();
 const getMatchLabel = (score) => {
-  if (score >= 60)
-    return "Excellent";
 
-  if (score >= 40)
-    return "Good";
+    if (score >= 85) {
+        return {
+            color: "text-green-600"
+        };
+    }
 
-  return "Weak";
+    if (score >= 75) {
+        return {
+            
+            color: "text-blue-600"
+        };
+    }
+
+    if (score >= 65) {
+        return {
+            color: "text-yellow-600"
+        };
+    }
+
+    return {
+        
+        color: "text-red-600"
+    };
 };
   return (
     <div className="bg-white rounded-xl shadow-lg p-4 mt-8 overflow-x-auto">
@@ -77,18 +94,24 @@ const getMatchLabel = (score) => {
                 {candidate.headline}
               </td>
 
-              <td className="p-3 font-bold text-green-600">
-                <div>
-  <div>
-    {candidate.final_score}
-  </div>
+              <td className="p-3">
 
-  <div className="text-xs">
-    {getMatchLabel(
-      candidate.final_score
-    )}
-  </div>
-</div>
+                <div>
+
+                  <div className="font-bold text-lg">
+                    {candidate.match_score}
+                  </div>
+
+                  <div
+                    className={`text-xs font-semibold ${
+                      getMatchLabel(candidate.match_score).color
+                    }`}
+                  >
+                    {getMatchLabel(candidate.match_score).text}
+                  </div>
+
+                </div>
+
               </td>
 
               <td className="p-3">

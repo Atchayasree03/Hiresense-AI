@@ -287,7 +287,7 @@ def calculate_career_score(
         candidate
     )
 
-    profile = extract_candidate_evidence(
+    evidence = extract_candidate_evidence(
     candidate
 )
 
@@ -325,7 +325,7 @@ def calculate_career_score(
     )
 
     competency_score = score_core_competencies(
-        profile,
+        evidence,
         parsed_jd
     )
 

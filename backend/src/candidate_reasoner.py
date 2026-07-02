@@ -1,131 +1,101 @@
-import os
-import json
-from urllib import response
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
 
-from dotenv import load_dotenv
-from openai import OpenAI
+model = SentenceTransformer("all-MiniLM-L6-v2")
 
-load_dotenv()
 
-client = OpenAI(
-    base_url="https://integrate.api.nvidia.com/v1",
-    api_key=os.getenv("GEMINI_API_KEY")
-)
+def reason_candidate(jd_intent, candidate):
 
-def reason_candidate(
-    jd_intent,
-    candidate
-):
-    prompt = f"""
-You are a Principal Technical Recruiter with 15 years of hiring experience.
+    profile = candidate["profile"]
 
-Your task is NOT to compare keywords.
+    headline = profile.get("headline", "")
 
-Your task is to understand whether the candidate has demonstrated the capability to perform this role.
+    summary = profile.get("summary", "")
 
-========================
-JOB REQUIREMENTS
-========================
+    skills = " ".join([
+        skill["name"]
+        for skill in candidate.get("skills", [])
+    ])
 
-{json.dumps(jd_intent, indent=2)}
+    experience = profile.get(
+        "years_of_experience",
+        0
+    )
 
-========================
-CANDIDATE PROFILE
-========================
+    text = f"""
+    {headline}
 
-{json.dumps(candidate, indent=2)}
+    {summary}
 
-========================
+    {skills}
+    """
 
-Evaluate the candidate exactly like a human recruiter.
+    jd_text = " ".join(
+        jd_intent["required_skills"]
+    )
 
-Think carefully.
+    jd_embedding = model.encode(
+        jd_text,
+        normalize_embeddings=True
+    )
 
-Consider:
+    candidate_embedding = model.encode(
+        text,
+        normalize_embeddings=True
+    )
 
-1. Career progression.
+    similarity = cosine_similarity(
+        [jd_embedding],
+        [candidate_embedding]
+    )[0][0]
 
-2. Types of projects built.
+    match_score = round(
+        similarity * 100,
+        2
+    )
 
-3. Production engineering experience.
+    if match_score >= 75:
+        decision = "Strong Match"
 
-4. Equivalent technologies.
+    elif match_score >= 60:
+        decision = "Good Match"
 
-5. Transferable skills.
+    else:
+        decision = "Weak Match"
 
-6. Domain expertise.
+    matched_skills = []
 
-7. Leadership experience.
+    searchable = text.lower()
 
-8. Product vs Service company background.
+    for skill in jd_intent["required_skills"]:
 
-9. Recruitability.
+        if skill.lower() in searchable:
 
-Do NOT reject candidates because they don't have exact keywords.
+            matched_skills.append(skill)
 
-Infer equivalent technologies.
+    reasoning = (
+        f"The candidate has {experience} years of experience. "
+        f"Semantic similarity between the job description and candidate profile is "
+        f"{match_score}%. "
+        f"Matched skills include "
+        f"{', '.join(matched_skills[:6])}."
+    )
 
-Infer hidden strengths.
+    return {
 
-Infer weaknesses.
+        "match_score": match_score,
 
-If someone built Elasticsearch, FAISS or OpenSearch,
-understand they have Retrieval experience.
+        "hire_decision": decision,
 
-If someone built Recommendation Systems,
-understand they have Ranking experience.
+        "strengths": matched_skills,
 
-If someone deployed ML models,
-understand they have Production ML experience.
+        "weaknesses": [],
 
-Your reasoning should explain WHY the candidate matches.
+        "missing_skills": [],
 
-Return ONLY JSON.
+        "career_evidence": [],
 
-Format:
+        "reasoning": reasoning
 
-{
-    "match_score":0,
-
-    "hire_decision":"Strong Match / Good Match / Weak Match",
-
-    "strengths":[],
-
-    "weaknesses":[],
-
-    "missing_skills":[],
-
-    "career_evidence":[],
-
-    "reasoning":""
-}
-"""
-        
-    response = client.chat.completions.create(
-
-            model="meta/llama-3.1-8b-instruct",
-
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-
-            temperature=0
-        )
-            
-    text = response.choices[0].message.content
-
-    text = text.replace("```json", "")
-    text = text.replace("```", "")
-    text = text.strip()
-
-    start = text.find("{")
-    end = text.rfind("}")
-
-    parsed = json.loads(
-            text[start:end+1]
-        )
-
-    return parsed
+    }

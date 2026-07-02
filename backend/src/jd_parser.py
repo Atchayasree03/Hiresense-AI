@@ -1,88 +1,153 @@
-import os
 import json
+import re
+import numpy as np
+
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+
 from src.jd_validator import validate_skills
-from dotenv import load_dotenv
-from openai import OpenAI
 
-load_dotenv()
+# Load model once
+model = SentenceTransformer("all-MiniLM-L6-v2")
 
-client = OpenAI(
-    base_url="https://integrate.api.nvidia.com/v1",
-    api_key=os.getenv("GEMINI_API_KEY")
-)
+# Load skills extracted from candidates.jsonl
+with open("data/skills.json", "r", encoding="utf-8") as f:
+    SKILLS = json.load(f)
+
+# Load precomputed embeddings
+skill_embeddings = np.load("data/skill_embeddings.npy")
+
+
+def split_jd(jd_text):
+    lines = re.split(r'[\n•,-]+', jd_text)
+
+    cleaned = []
+
+    for line in lines:
+        line = line.strip()
+
+        if len(line) > 3:
+            cleaned.append(line)
+
+    return cleaned
+
+
+def extract_exact_skills(jd):
+
+    jd_lower = jd.lower()
+
+    skills = []
+
+    for skill in SKILLS:
+
+        if skill.lower() in jd_lower:
+
+            skills.append(skill)
+
+    return skills
+
+
+def search_skills(sentence):
+
+    embedding = model.encode(
+        sentence,
+        normalize_embeddings=True
+    )
+
+    similarities = cosine_similarity(
+        [embedding],
+        skill_embeddings
+    )[0]
+
+    matches = []
+
+    for skill, score in zip(SKILLS, similarities):
+
+        if score >= 0.70:
+
+            matches.append(skill)
+
+    return matches
+
+
+def extract_semantic_skills(jd):
+
+    sentences = split_jd(jd)
+
+    semantic = []
+
+    for sentence in sentences:
+
+        semantic.extend(
+            search_skills(sentence)
+        )
+
+    return list(set(semantic))
+
+
+def extract_required_skills(jd):
+
+    exact = extract_exact_skills(jd)
+
+    semantic = extract_semantic_skills(jd)
+
+    final = exact.copy()
+
+    for skill in semantic:
+
+        if skill not in final:
+
+            final.append(skill)
+
+    return final
+
+
+def extract_experience(jd):
+
+    match = re.search(
+        r'(\d+)\+?\s*(years?|yrs?)',
+        jd.lower()
+    )
+
+    if match:
+        return int(match.group(1))
+
+    return 0
+
+
+def extract_role(jd):
+
+    lines = split_jd(jd)
+
+    if len(lines) > 0:
+        return lines[0]
+
+    return "Software Engineer"
+
 
 def parse_jd(jd_text):
 
-    prompt = f"""
-        You are an expert technical recruiter.
+    parsed = {
 
-        Analyze the following Job Description.
+        "role": extract_role(jd_text),
 
-        Return ONLY valid JSON.
+        "required_skills": extract_required_skills(jd_text),
 
-        Do NOT copy text blindly.
+        "preferred_skills": [],
 
-        Infer the recruiter's intent.
+        "experience_years": extract_experience(jd_text),
 
-        Return this exact format:
+        "responsibilities": [],
 
-        {{
-        "role":"",
-        "required_skills":[],
-        "preferred_skills":[],
-        "experience_years":0,
-        "responsibilities":[],
-        "core_competencies":[],
-        "engineering_focus":[],
-        "company_preference":"",
-        "behavioral_preferences":[]
-        }}
+        "core_competencies": [],
 
-        Rules:
+        "engineering_focus": [],
 
-        - Separate required and preferred skills.
-        - Infer hidden competencies.
-        - Group similar technologies.
-        - If Pinecone, FAISS, Weaviate appear → Retrieval Systems.
-        - If TensorFlow, PyTorch appear → Machine Learning.
-        - If NDCG, MRR appear → Ranking Evaluation.
-        - Infer engineering focus.
-        - Infer preferred company type.
-        - Infer behavioral expectations.
-        - Return JSON only.
+        "company_preference": "",
 
-        JD:
+        "behavioral_preferences": []
 
-        {jd_text}
-        """
-
-    response = client.chat.completions.create(
-        model="meta/llama-3.1-8b-instruct",
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-        temperature=0
-    )
-
-    text = response.choices[0].message.content
-
-    text = text.replace("```json", "")
-    text = text.replace("```", "")
-    text = text.strip()
-
-    # Find JSON boundaries
-    start = text.find("{")
-    end = text.rfind("}")
-
-    if start == -1 or end == -1:
-        raise ValueError(f"No JSON found.\nResponse:\n{text}")
-
-    json_text = text[start:end + 1]
-
-    parsed = json.loads(json_text)
+    }
 
     parsed = validate_skills(
         parsed,
@@ -90,21 +155,3 @@ def parse_jd(jd_text):
     )
 
     return parsed
-
-
-jd_text = """
-Data Scientist
-
-Requirements:
-Python
-SQL
-TensorFlow
-PyTorch
-Scikit-learn
-
-3+ years experience
-"""
-
-parsed_jd = parse_jd(jd_text)
-
-print(parsed_jd)

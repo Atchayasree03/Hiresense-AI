@@ -30,7 +30,7 @@ def rank(request: JobRequest):
 
     candidates = rank_candidates(
         request.jd,
-        top_k=10
+        top_k=100
     )
 
     return {

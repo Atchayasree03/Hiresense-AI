@@ -1,13 +1,15 @@
+
+
 from src.faiss_search import search_candidates
 from src.candidate_mapper import get_candidate
 from src.career_score import calculate_career_score
 from src.behavior_score import calculate_behavior_score
 from src.jd_parser import parse_jd
 from src.explanation_engine import generate_explanation
-from src.ai_reasoner import generate_ai_reason
+from src.local_reasoner import generate_ai_reason
 from src.jd_intent_engine import extract_intent
 
-def rank_candidates(jd_text, top_k=10):
+def rank_candidates(jd_text, top_k=100):
 
     parsed_jd = parse_jd(jd_text)
     
@@ -26,7 +28,7 @@ def rank_candidates(jd_text, top_k=10):
 
     scores, indices = search_candidates(
         jd_text,
-        top_k=30
+        top_k=300
     )
 
     ranked_candidates = []
@@ -66,27 +68,34 @@ def rank_candidates(jd_text, top_k=10):
             )
         )
 
-        final_score = (
-            0.30 * semantic_score
+        match_score = (
+            0.50 * semantic_score
             +
-            0.60 * career_score
+            0.40 * career_score
             +
             0.10 * behavior_score
         )
 
         if len(matched_skills) == 0:
-            final_score *= 0.8
+            match_score *= 0.8
 
-        final_score = round(
-            final_score,
+        match_score = round(
+            match_score,
             2
         )
 
-        reasons = generate_explanation(
-            candidate,
-            matched_skills,
-            jd_experience
-        )
+        # # Normalize score to 65-100
+        # match_score = 65 + ((match_score - 60) / 15) * 35
+
+        # match_score = max(0, min(match_score, 100))
+
+        # match_score = round(match_score, 2)
+
+        # reasons = generate_explanation(
+        #     candidate,
+        #     matched_skills,
+        #     jd_experience
+        # )
 
         ai_summary = generate_ai_reason(
             candidate,
@@ -94,24 +103,40 @@ def rank_candidates(jd_text, top_k=10):
             jd_text,
         )
 
+        reasons = generate_explanation(
+        candidate,
+        matched_skills,
+        jd_experience
+)
+
         ranked_candidates.append({
-        "candidate_id": candidate["candidate_id"],
 
-        "profile": candidate["profile"],
+    "candidate_id": candidate["candidate_id"],
 
-        "headline": candidate["profile"]["headline"],
+    "headline": candidate["profile"].get("headline", ""),
 
-        "semantic_score": semantic_score,
-        "career_score": career_score,
-        "behavior_score": behavior_score,
-        "final_score": final_score,
+    "years_of_experience": candidate["profile"].get(
+        "years_of_experience",
+        0
+    ),
 
-        "matched_skills": matched_skills,
-        "reasons": reasons,
-        "ai_summary": ai_summary
-    })
+    "match_score": match_score,
+
+    "semantic_score": semantic_score,
+
+    "career_score": career_score,
+
+    "behavior_score": behavior_score,
+
+    "matched_skills": matched_skills,
+
+    "reasons": reasons,
+
+    "ai_summary": ai_summary
+
+})
     ranked_candidates.sort(
-        key=lambda x: x["final_score"],
+        key=lambda x: x["match_score"],
         reverse=True
     )
 
@@ -201,7 +226,7 @@ Mathematics
         )
 
         print(
-            f"Final Score: {candidate['final_score']}"
+            f"Match Score: {candidate['match_score']}"
         )
 
         print("Reasons:")

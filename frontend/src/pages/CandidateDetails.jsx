@@ -164,7 +164,7 @@ AI Match Analysis
 
 <div className="bg-blue-100 p-4 rounded">
 <b>Final Score</b>
-<p>{candidate.final_score}</p>
+<p>{candidate.match_score}</p>
 </div>
 
 <div className="bg-green-100 p-4 rounded">
