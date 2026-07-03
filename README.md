@@ -1,19 +1,33 @@
 #CLONE THE REPOSITORY
+
 git clone https://github.com/Atchayasree03/Hiresense-AI.git
 
+
 #FRONTEND
+
 cd Hiresense-AI
+
 cd frontend
+
 npm create vite@latest
+
 npm install
+
 npm run dev
 
+
 #BACKEND
+
 cd Hiresense-AI
+
 cd backend
+
 venv\Scripts\activate
+
 pip install fastapi uvicorn pandas numpy sentence-transformers faiss-cpu scikit-learn tqdm python-dotenv pydantic python-multipart
+
 uvicorn api:app --reload
+
 
 Wait until you see :
 
@@ -31,7 +45,9 @@ INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 
 
+
 Then open http://localhost:5173/
+
 Paste JD and Analyze Candidate
 
 No need to generate any file and embeddings using Python scripts
