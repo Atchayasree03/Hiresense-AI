@@ -8,7 +8,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from src.jd_validator import validate_skills
 
 # Load model once
-model = SentenceTransformer("all-MiniLM-L6-v2")
+model = SentenceTransformer("models/all-MiniLM-L6-v2")
 
 # Load skills extracted from candidates.jsonl
 with open("data/skills.json", "r", encoding="utf-8") as f:

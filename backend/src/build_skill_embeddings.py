@@ -3,9 +3,7 @@ import numpy as np
 
 from sentence_transformers import SentenceTransformer
 
-model = SentenceTransformer(
-    "all-MiniLM-L6-v2"
-)
+model = SentenceTransformer("models/all-MiniLM-L6-v2")
 
 with open(
     "data/skills.json",
